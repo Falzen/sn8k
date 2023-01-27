@@ -1,0 +1,372 @@
+<html>
+<head>
+  <style>
+    #game-board td {
+      position: relative;
+      padding: 5px;
+      background-color: #A9A9A9;
+    }
+    #game-board td.snake {
+      background-color: #000000;
+    }
+    #game-board td.head {
+      background-color: red;
+    }
+    .food {
+      background-color: green !important;
+    }
+    img.explo {
+      position: absolute;
+      z-index: 10;
+      width: 30px;
+      height: auto;
+      top: -15px;
+      left: -15px;
+    }
+    .rain {
+      background-color: darkblue !important;
+    }
+  </style>
+</head>
+<body>
+  <table id="game-board">
+  </table>
+  <p>Level: <span id="lvl"></span></p>
+  <script>
+
+
+var settings = {
+  h: 20,
+  w: 20,
+  lvl: 0,
+  nbFoods: 0,
+  ticksPerSecond: 4,
+}
+
+var container = document.getElementById('game-board');
+
+var snake, direction, speed, gameLoop, food, domLevel, isDead;
+var rainCoord;
+
+function makeGrid() {
+  let outputHtml = '<table>';
+  for (var i = 0; i < settings.h; i++) {
+    outputHtml += '<tr>';
+    for (var j = 0; j < settings.w; j++) {
+      let coords = i + '_' + j;
+      outputHtml += '<td id="' + coords + '"></td>';
+    }
+    outputHtml += '</tr>';
+  }
+  outputHtml += '</table>';
+  return outputHtml;
+}
+
+function drawGrid() {
+  container.innerHTML = makeGrid();
+}
+
+
+
+  init();
+
+
+function init() {
+    rainCoord = [[0, 10], [-1, 10], [-2, 10]];
+    drawGrid();
+    domLevel = document.getElementById('lvl');
+    domLevel.innerText = settings.lvl;
+    snake = [[0,0], [1,0], [2,0], [3,0], [4,0], [5,0], [6,0], [7,0], [8,0], [9,0], [10,0], [11,0], [12,0], [13,0], [14,0], [15,0], [16,0], [17,0], [18,0], [19,0]];
+    drawSnake(snake);
+    direction = "right";
+    speed = 10;
+
+    food = [3,2];
+    isDead = false;
+    generateFood();
+    makeRain();
+    //gameLoop = setInterval(loop, 1000/speed);
+    loop();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    function loop() {
+      if(rainCoord && rainCoord.length != 0) {
+        moveRain(rainCoord);
+      } else {
+        makeRain();
+      }
+      moveSnake();
+      if(checkFood()) {
+        generateFood();
+      } else {
+        checkDeath();
+      }
+
+      setTimeout(function() {
+        if(!isDead) {
+          loop();
+        }
+      }, 1000/speed);
+    }
+
+
+
+
+
+
+    function drawSnake(snake) {
+      for (let i=0; i<snake.length; i++) {
+        let domId = `${snake[i][0]}_${snake[i][1]}`;
+        if(i == snake.length-1) {
+          document.getElementById(domId).classList.add("head");
+        } else {
+          document.getElementById(domId).classList.remove("head");
+          document.getElementById(domId).classList.add("snake");
+        }
+      }
+    }
+
+
+function makeRain() {
+  let drop1 = Math.floor(Math.random() * settings.w);
+  let drop2 = Math.floor(Math.random() * settings.w);
+  let drop3 = Math.floor(Math.random() * settings.w);
+  rainCoord = [[0, drop1], [-1, drop2], [-2, drop3]];
+}
+function moveRain(rain) {
+      let lastElement = rain[rain.length-1];
+      let newElement;
+      // going down
+      newElement = [lastElement[0]+1, lastElement[1]];
+      let isOutOfBounds = false;
+      
+      // check if going out of bounds
+      if(newElement[0] >= settings.h) {
+        isOutOfBounds = true;
+      } else if(newElement[0] < 0) {
+        // isOutOfBounds = true;
+      }
+      if(newElement[1] >= settings.w) {
+        isOutOfBounds = true;
+      } else if(newElement[1] < 0) {
+        // isOutOfBounds = true;
+      }
+
+
+      if(!isOutOfBounds) {
+        rain.push(newElement);
+      }
+      drawRain(rain);
+      let notRain = document.getElementById(rain[0][0] + '_' + rain[0][1]);
+      // check for null cause my start out of bounds
+      if(notRain != null) {
+        notRain.classList.remove("rain");
+      }
+      rain.shift();
+}
+
+function drawRain(rain) {
+    for (let i=0; i<rain.length; i++) {
+      let domId = rain[i][0] + '_' + rain[i][1];
+      let domElem = document.getElementById(domId);
+      // check for null cause part of rain starts out of bounds
+      if(domElem != null) {
+        // is not hitting snake body
+        if(!domElem.classList.contains('snake')) {
+          domElem.classList.add("rain");
+        } else {
+          rain.splice(i,1);
+        }
+      }
+    }
+}
+
+
+
+
+    function moveSnake() {
+      let lastElement = snake[snake.length-1];
+      let newElement;
+      switch (direction) {
+        case "right":
+          newElement = [lastElement[0], lastElement[1]+1];
+          break;
+        case "left":
+          newElement = [lastElement[0], lastElement[1]-1];
+          break;
+        case "up":
+          newElement = [lastElement[0]-1, lastElement[1]];
+          break;
+        case "down":
+          newElement = [lastElement[0]+1, lastElement[1]];
+          break;
+      }
+      
+        if(newElement[0] >= settings.h) {
+          newElement[0] = 0;
+        } else if(newElement[0] < 0) {
+          newElement[0] = settings.h - 1;
+        }
+        if(newElement[1] >= settings.w) {
+          newElement[1] = 0;
+        } else if(newElement[1] < 0) {
+          newElement[1] = settings.w - 1;
+        }
+
+
+
+      snake.push(newElement);
+      drawSnake(snake);
+      document.getElementById(snake[0][0] + '_' + snake[0][1]).classList.remove("snake", "head");
+
+      snake.shift();
+      // check hitting rain
+      for (var i = 0; i < rainCoord.length; i++) {
+        if(rainCoord[i][0] == newElement[0] && rainCoord[i][1] == newElement[1]) {
+          isDead = true;
+          doDeath();
+        }
+      }
+    }
+
+
+
+
+
+
+    function checkFood() {
+      let lastElement = snake[snake.length-1];
+      if (lastElement[0] == food[0] && lastElement[1] == food[1]) {
+        handleLevelUp();
+        snake.unshift(food);
+        drawSnake(snake);
+        document.getElementById(`${food[0]}_${food[1]}`).classList.remove("food");
+        return true
+      }
+      return false;
+    }
+
+
+    function handleLevelUp() {
+      settings.nbFoods++;
+      if(settings.nbFoods%3 == 0) {
+        settings.lvl++;
+        domLevel.innerText = settings.lvl;
+        speed *= 1.05;
+      }
+    }
+        
+
+
+
+    function checkDeath() {
+      let headElement = snake[snake.length-1];
+      let headCoord = headElement[0] + '_' + headElement[1];
+      let classList = document.getElementById(headCoord).classList;
+      if(classList.contains('snake') && !classList.contains('food')) {
+        isDead = true;
+        doDeath();
+        // alert('dead');
+      }
+    
+    }
+
+    function doDeath() {
+      let exploIndex = snake.length-1;
+      let exploTimer = setInterval(function() {
+          makeExplosion(exploIndex);
+          exploIndex--;
+          if(exploIndex < 0) {
+            clearInterval(exploTimer);
+          }
+      }, 150);
+    }
+
+    function makeExplosion(exploIndex) {
+      let x = snake[(exploIndex)][1];
+      let y = snake[(exploIndex)][0];
+
+      let snakeCell = document.getElementById(y+'_'+x);
+      var img = new Image();
+      img.src = 'explotion-explode.gif?v=' + new Date().valueOf();
+      img.className = 'explo';
+      img.id = 'explo'+exploIndex;
+      snakeCell.appendChild(img);
+
+      setTimeout(function() {
+        removeImg(img.id);
+      }, 700);
+    }
+
+    function removeImg(domId) {
+      document.getElementById(domId).parentNode.classList.remove('snake', 'head');
+      setTimeout(function() {
+        document.getElementById(domId).remove();
+      }, 100);
+    }
+
+
+
+
+
+
+    function generateFood() {
+      do {
+        let x = Math.floor(Math.random() * settings.w);
+        let y = Math.floor(Math.random() * settings.h);
+        food = [y, x];
+      } while (
+        document.getElementById(food[0]+'_'+food[1]).classList.contains('snake')
+        || document.getElementById(food[0]+'_'+food[1]).classList.contains('head')
+      );
+
+      document.getElementById(food[0]+'_'+food[1]).classList.add("food");
+    }
+
+
+
+
+
+
+    function endGame() {
+      clearInterval(gameLoop);
+      alert("Game Over!");
+    }
+    document.addEventListener("keydown", event => {
+      switch (event.keyCode) {
+        case 37:
+          if(direction == 'right') return;
+          direction = "left";
+          break;
+        case 38:
+          if(direction == 'down') return;
+          direction = "up";
+          break;
+        case 39:
+          if(direction == 'left') return;
+          direction = "right";
+          break;
+        case 40:
+          if(direction == 'up') return;
+          direction = "down";
+          break;
+      }
+    });
+  </script>
+</body>
+</html>
